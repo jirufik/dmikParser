@@ -1,0 +1,47 @@
+{
+  "name": "dmikParser",
+  "version": "1.0.0",
+  "description": "dmik parser",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "NODE_ENV=production babel src --out-dir dist",
+    "start": "NODE_ENV=production node dist/index.js",
+    "start-dev": "npx babel-node src/index.js",
+    "create-db": "npx babel-node ./src/db/runScripts/createDb.js",
+    "rebuild-db": "REBUILD_DB=true npx babel-node ./src/db/runScripts/createDb.js"
+  },
+  "keywords": [
+    "jrf"
+  ],
+  "author": {
+    "name": "jirufik",
+    "url": "https://github.com/dmikParser"
+  },
+  "maintainers": [
+    {
+      "name": "jirufik",
+      "url": "https://github.com/dmikParser"
+    }
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=8"
+  },
+  "dependencies": {
+    "nightmare": "^3.0.2",
+    "jrf-path-exists": "^1.0.4",
+    "pg": "^7.18.1",
+    "lodash": "^4.17.15",
+    "moment": "^2.24.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.8.4",
+    "@babel/preset-env": "^7.8.4",
+    "@babel/cli": "^7.8.4",
+    "@babel/node": "^7.8.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jirufik/dmikParser"
+  }
+}

@@ -14,7 +14,7 @@ async function createDb() {
   const postgres = new ConnectorPG({host, port, user, password, database});
   await postgres.testConnect();
 
-  await runScript({postgres, rebuild: process.env.REBUILD_DB});
+  await runScript({postgres, rebuild: process.env.REBUILD_DB, update: process.env.UPDATE_DB});
 
   await postgres.end();
 

@@ -15,6 +15,13 @@ export default class Logs {
       data = {data: data};
     }
 
+    if (data.error) {
+      try {
+        data.error = JSON.stringify(data.error, null, 2);
+      } catch (e) {
+      }
+    }
+
     processId = processId || this.processId || 'noId';
 
     const text = `INSERT INTO logs(type, service, process_id, log, data)

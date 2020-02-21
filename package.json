@@ -8,7 +8,8 @@
     "start": "NODE_ENV=production node dist/index.js",
     "start-dev": "npx babel-node src/index.js",
     "create-db": "npx babel-node ./src/db/runScripts/createDb.js",
-    "rebuild-db": "REBUILD_DB=true npx babel-node ./src/db/runScripts/createDb.js"
+    "rebuild-db": "REBUILD_DB=true npx babel-node ./src/db/runScripts/createDb.js",
+    "update-db": "UPDATE_DB=true npx babel-node ./src/db/runScripts/createDb.js"
   },
   "keywords": [
     "jrf"
@@ -32,7 +33,8 @@
     "jrf-path-exists": "^1.0.4",
     "pg": "^7.18.1",
     "lodash": "^4.17.15",
-    "moment": "^2.24.0"
+    "moment": "^2.24.0",
+    "axios": "^0.19.2"
   },
   "devDependencies": {
     "@babel/core": "^7.8.4",

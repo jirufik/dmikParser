@@ -1,4 +1,5 @@
 import Nightmare from 'nightmare'
+
 const config = require("../../config");
 
 const TIMEOUT = config.timeouts.parse;
@@ -204,7 +205,7 @@ async function dmikParse({logs}) {
     } catch (e) {
 
       console.error(e);
-      await logs.add({type: 'error', log: `Error in getFilms: ${e.message}`, data: {error: e}});
+      await logs.add({type: 'error', log: `Error in getFilms: ${e.message}`, data: {error: e.stack}});
 
     }
     if (!films || !films.length) return dataFilms;
@@ -224,7 +225,7 @@ async function dmikParse({logs}) {
       } catch (e) {
 
         console.error(e);
-        await logs.add({type: 'error', log: `Error in fillFilm: ${e.message}`, data: {error: e, film}});
+        await logs.add({type: 'error', log: `Error in fillFilm: ${e.message}`, data: {error: e.stack, film}});
         continue;
 
       }

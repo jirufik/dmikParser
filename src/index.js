@@ -8,6 +8,8 @@ import Schedules from "./model/Schedules";
 import Logs from "./model/Logs";
 import moment from "moment";
 import generateId from "./utils/generateId";
+import TMDB from "./tmdb";
+
 const config = require("../config");
 
 const TIMEOUT = config.timeouts.updateFilms;
@@ -26,6 +28,7 @@ async function updateFilms() {
   await postgres.testConnect();
 
   const logs = new Logs({postgres, processId});
+  const tmdb = new TMDB({logs});
   const start = Date.now();
 
   await logs.add({type: 'info', log: 'start parse'});
@@ -69,10 +72,10 @@ async function updateFilms() {
     for (const dataFilm of dataFilms) {
 
       try {
-        await addFilm({dataFilm, filmsModel});
+        await addFilm({dataFilm, filmsModel, tmdb, logs});
       } catch (e) {
         console.error(e);
-        await logs.add({type: 'error', log: `Error in addFilm: ${e.message}`, data: {error: e, dataFilm}});
+        await logs.add({type: 'error', log: `Error in addFilm: ${e.message}`, data: {error: e.stack, dataFilm}});
         continue;
       }
 
@@ -111,7 +114,7 @@ async function updateFilms() {
 
             } catch (e) {
               console.error(e);
-              await logs.add({type: 'error', log: `Error in addHall: ${e.message}`, data: {error: e, hall}});
+              await logs.add({type: 'error', log: `Error in addHall: ${e.message}`, data: {error: e.stack, hall}});
               continue;
             }
 
@@ -139,7 +142,11 @@ async function updateFilms() {
 
               } catch (e) {
                 console.error(e);
-                await logs.add({type: 'error', log: `Error in addTicket: ${e.message}`, data: {error: e, session}});
+                await logs.add({
+                  type: 'error',
+                  log: `Error in addTicket: ${e.message}`,
+                  data: {error: e.stack, session}
+                });
                 continue;
               }
 
@@ -157,7 +164,11 @@ async function updateFilms() {
 
               } catch (e) {
                 console.error(e);
-                await logs.add({type: 'error', log: `Error in addSchedule: ${e.message}`, data: {error: e, schedule}});
+                await logs.add({
+                  type: 'error',
+                  log: `Error in addSchedule: ${e.message}`,
+                  data: {error: e.stack, schedule}
+                });
               }
 
             }
@@ -175,7 +186,7 @@ async function updateFilms() {
   } catch (e) {
 
     console.error(e);
-    await logs.add({type: 'error', log: e.message, data: {error: e}});
+    await logs.add({type: 'error', log: e.message, data: {error: e.stack}});
 
   } finally {
 
@@ -203,7 +214,7 @@ async function addSchedule({date, filmCode, time, hallId, ticketId, cost, schedu
 
 }
 
-async function addFilm({dataFilm, filmsModel}) {
+async function addFilm({dataFilm, filmsModel, tmdb, logs}) {
 
   if (!dataFilm || typeof dataFilm !== 'object') return;
 
@@ -214,12 +225,48 @@ async function addFilm({dataFilm, filmsModel}) {
   const country = pathExists(dataFilm, 'country', '').split(',').map(el => el.trim());
   const age = Number(dataFilm.age || 0);
   const about = dataFilm.about || '';
-  const genre = pathExists(dataFilm, 'genre', '').split(',').map(el => el.trim());
+  const genre = pathExists(dataFilm, 'genre', '').split(',').map(el => el.trim().toLowerCase());
   const producer = dataFilm.producer || '';
   const img = dataFilm.img || '';
   const data = dataFilm;
 
-  await filmsModel.add({code, name, year, tagline, country, age, about, genre, producer, img, data});
+  const film = {code, name, year, tagline, country, age, about, genre, producer, img, data};
+  await updateInfoFromTMDB({film, tmdb, logs});
+
+  await filmsModel.add(film);
+
+}
+
+async function updateInfoFromTMDB({film, tmdb, logs}) {
+
+  try {
+
+    const info = await tmdb.getInfo({name: film.name, year: film.year});
+
+    if (!info) {
+
+      if (!film.idTmdb) film.idTmdb = 0;
+      if (!film.vote) film.vote = 0;
+      if (!film.runtime) film.runtime = 0;
+      if (!film.originalName) film.originalName = '';
+
+      return;
+    }
+
+    film.idTmdb = info.id;
+    film.img = info.img;
+    film.vote = info.vote;
+    film.runtime = info.runtime;
+    film.tagline = info.tagline;
+    film.originalName = info.originalName;
+
+    if (info.genres) {
+      film.genre = [...info.genres]
+    }
+
+  } catch (e) {
+    await logs.add({type: 'error', log: `Error in updateInfoFromTMDB: ${e.message}`, data: {error: e.stack, film}});
+  }
 
 }
 

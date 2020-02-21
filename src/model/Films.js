@@ -9,7 +9,7 @@ export default class Films {
 
   }
 
-  async add({code, name, year, tagline, country, age, about, genre, producer, img, data}) {
+  async add({code, name, year, tagline, country, age, about, genre, producer, img, data, idTmdb, vote, runtime, originalName}) {
 
     const films = await this.get({code});
 
@@ -17,8 +17,8 @@ export default class Films {
 
     if (!films || !films.length) {
 
-      const text = `INSERT INTO films(code, name, year, tagline, country, age, about, genre, producer, img, data, created, version)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), 1) RETURNING * ;`;
+      const text = `INSERT INTO films(code, name, year, tagline, country, age, about, genre, producer, img, data, created, version, vote, original_name, id_tmdb, runtime)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), 1, $12, $13, $14, $15) RETURNING * ;`;
 
       values.push(code);
       values.push(name);
@@ -31,6 +31,10 @@ export default class Films {
       values.push(producer);
       values.push(img);
       values.push(data);
+      values.push(vote);
+      values.push(originalName);
+      values.push(idTmdb);
+      values.push(runtime);
 
       const res = await this.postgres.query({text, values});
 
@@ -41,7 +45,23 @@ export default class Films {
     const film = pathExists(films, '[0]');
     if (!film) return;
 
-    const update = this._update({film, name, year, tagline, country, age, about, genre, producer, img});
+    const update = this._update({
+      film,
+      name,
+      year,
+      tagline,
+      country,
+      age,
+      about,
+      genre,
+      producer,
+      img,
+      idTmdb,
+      vote,
+      runtime,
+      originalName
+    });
+
     if (update) {
       const res = await this.edit({
         code,
@@ -54,6 +74,10 @@ export default class Films {
         genre,
         producer,
         img,
+        idTmdb,
+        vote,
+        runtime,
+        originalName,
         version: film.version
       });
       return res;
@@ -86,7 +110,7 @@ export default class Films {
 
   }
 
-  async edit({code, name, year, tagline, country, age, about, genre, producer, img, data, version}) {
+  async edit({code, name, year, tagline, country, age, about, genre, producer, img, data, idTmdb, vote, runtime, originalName, version}) {
 
     const films = await this.get({code});
 
@@ -101,8 +125,8 @@ export default class Films {
 
     const values = [];
 
-    const text = `UPDATE films SET (name, year, tagline, country, age, about, genre, producer, img, data, updated, version) 
-                  = ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), $11)
+    const text = `UPDATE films SET (name, year, tagline, country, age, about, genre, producer, img, data, updated, version, vote, original_name, id_tmdb, runtime) 
+                  = ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), $11, $12, $13, $14, $15)
                   WHERE code = ${code} RETURNING * ;`;
 
     values.push(name);
@@ -116,6 +140,10 @@ export default class Films {
     values.push(img);
     values.push(data);
     values.push(++version);
+    values.push(vote);
+    values.push(originalName);
+    values.push(idTmdb);
+    values.push(runtime);
 
     const res = await this.postgres.query({text, values});
 
@@ -123,7 +151,7 @@ export default class Films {
 
   }
 
-  _update({film, name, year, tagline, country, age, about, genre, producer, img}) {
+  _update({film, name, year, tagline, country, age, about, genre, producer, img, idTmdb, vote, runtime, originalName}) {
 
     let update = film.name.toLowerCase() !== name.toLowerCase();
     if (update) return true;
@@ -150,6 +178,19 @@ export default class Films {
     if (update) return true;
 
     update = film.img.toLowerCase() !== img.toLowerCase();
+    if (update) return true;
+
+    update = Number(film.id_tmdb) !== Number(idTmdb);
+    if (update) {
+      console.log(Number(film.id_tmdb));
+      console.log(idTmdb);
+      return true;
+    }
+
+    update = Number(film.runtime) !== Number(runtime);
+    if (update) return true;
+
+    update = pathExists(film, 'original_name', '').toLowerCase() !== originalName.toLowerCase();
     if (update) return true;
 
     return false;

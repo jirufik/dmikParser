@@ -3,7 +3,11 @@ export default function namesEqual({nameA, nameB}) {
   nameA = processName(nameA);
   nameB = processName(nameB);
 
-  return nameA === nameB;
+  // return nameA === nameB;
+  let isEqual = nameA.includes(nameB);
+  if (!isEqual) isEqual = nameB.includes(nameA);
+
+  return isEqual;
 
 }
 

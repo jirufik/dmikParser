@@ -114,4 +114,14 @@ export default class Schedules {
 
   }
 
+  async del({codeFilm}) {
+
+    if (!codeFilm) return;
+
+    const text = `DELETE FROM schedules WHERE code_film = ${codeFilm}`;
+
+    const res = await this.postgres.query({text});
+
+  }
+
 }

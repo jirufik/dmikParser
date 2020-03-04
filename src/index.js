@@ -82,6 +82,15 @@ async function updateFilms() {
       const schedule = dataFilm.schedule;
       if (!schedule || !schedule.length) continue;
 
+      try {
+        const codeFilm = Number(dataFilm.code);
+        await schedulesModel.del({codeFilm});
+      } catch (e) {
+        console.error(e);
+        await logs.add({type: 'error', log: `Error in del schedules: ${e.message}`, data: {error: e.stack, dataFilm}});
+        continue;
+      }
+
       for (const date of schedule) {
 
         const sessions = date.sessions;
